@@ -2,6 +2,7 @@ package com.ipiecoles.java.java230;
 
 import ch.qos.logback.core.encoder.EchoEncoder;
 import com.ipiecoles.java.java230.exceptions.BatchException;
+import com.ipiecoles.java.java230.exceptions.TechnicienException;
 import com.ipiecoles.java.java230.model.Commercial;
 import com.ipiecoles.java.java230.model.Employe;
 import com.ipiecoles.java.java230.model.Manager;
@@ -55,6 +56,7 @@ public class MyRunner implements CommandLineRunner {
         String fileName = "employes.csv";
         readFile(fileName);
         //readFile(strings[0]);
+        employeRepository.save(employes);
     }
 
     /**
@@ -118,31 +120,15 @@ public class MyRunner implements CommandLineRunner {
     private void processCommercial(String ligneCommercial) throws BatchException {
         String[] infoEmpl = ligneCommercial.split(",");
 
+
+
+
         if(infoEmpl.length == 7) {
 
 
             Commercial c = new Commercial();
-            if (infoEmpl[0].matches("^[MTC][0-9]{5}$")) {
-                c.setMatricule(infoEmpl[0]);
-            } else {
-                throw new BatchException("la chaîne " + infoEmpl[0] + " ne respecte pas l'expression régulière ^[MTC][0-9]{5}$ ");
-            }
 
 
-            c.setNom(infoEmpl[1]);
-            c.setPrenom(infoEmpl[2]);
-
-            try {
-                c.setDateEmbauche(DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(infoEmpl[3]));
-            } catch (Exception e) {
-                throw new BatchException(infoEmpl[3] + " ne respecte pas le format de date dd/MM/yyyy ");
-            }
-
-            try {
-                c.setSalaire(Double.parseDouble(infoEmpl[4]));
-            } catch (Exception e) {
-                throw new BatchException(infoEmpl[4] + " n'est pas un nombre valide pour un salaire ");
-            }
 
             try {
                 c.setCaAnnuel(Double.parseDouble(infoEmpl[5]));
@@ -156,6 +142,7 @@ public class MyRunner implements CommandLineRunner {
                 throw new BatchException("La performance du commercial est incorrecte : " + infoEmpl[5]);
             }
 
+            processEmploye(c , ligneCommercial);
             employes.add(c);
 
         }else{
@@ -175,27 +162,8 @@ public class MyRunner implements CommandLineRunner {
 
 
             Manager m = new Manager();
-            if (infoEmpl[0].matches("^[MTC][0-9]{5}$")) {
-                m.setMatricule(infoEmpl[0]);
-            } else {
-                throw new BatchException("la chaîne " + infoEmpl[0] + " ne respecte pas l'expression régulière ^[MTC][0-9]{5}$ ");
-            }
 
-
-            m.setNom(infoEmpl[1]);
-            m.setPrenom(infoEmpl[2]);
-
-            try {
-                m.setDateEmbauche(DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(infoEmpl[3]));
-            } catch (Exception e) {
-                throw new BatchException(infoEmpl[3] + " ne respecte pas le format de date dd/MM/yyyy ");
-            }
-
-            try {
-                m.setSalaire(Double.parseDouble(infoEmpl[4]));
-            } catch (Exception e) {
-                throw new BatchException(infoEmpl[4] + " n'est pas un nombre valide pour un salaire ");
-            }
+            processEmploye(m,ligneManager);
 
             employes.add(m);
 
@@ -217,58 +185,39 @@ public class MyRunner implements CommandLineRunner {
 
             Technicien t = new Technicien();
 
-            if (infoEmpl[0].matches("^[MTC][0-9]{5}$")) {
-                t.setMatricule(infoEmpl[0]);
-            } else {
-                throw new BatchException("la chaîne " + infoEmpl[0] + " ne respecte pas l'expression régulière ^[MTC][0-9]{5}$ ");
-            }
-
-
-            t.setNom(infoEmpl[1]);
-            t.setPrenom(infoEmpl[2]);
 
             try {
-                t.setDateEmbauche(DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(infoEmpl[3]));
-            } catch (Exception e) {
-                throw new BatchException(infoEmpl[3] + " ne respecte pas le format de date dd/MM/yyyy ");
+
+                t.setGrade(Integer.parseInt(infoEmpl[5]));
+
+            }catch (TechnicienException tE){
+                throw new BatchException(tE.getMessage());
             }
-
-//            try {
-//                if(Integer.parseInt(infoEmpl[5]) <=5 && Integer.parseInt(infoEmpl[5]) >=1) {
-//                    t.setGrade(Integer.parseInt(infoEmpl[5]));
-//                }else{
-//                    throw new BatchException("Le grade doit être compris entre 1 et 5 : " + infoEmpl[5] + ", " + t.toString());
-//                }
-//            } catch (Exception e) {
-//                throw new BatchException("Le grade du technicien est incorrect : " + infoEmpl[5]);
-//            }
-
-            
-
-
-            try {
-                t.setSalaire(Double.parseDouble(infoEmpl[4]));
-            } catch (Exception e) {
-                throw new BatchException(infoEmpl[4] + " n'est pas un nombre valide pour un salaire ");
+            catch (Exception e) {
+                throw new BatchException("Le grade du technicien est incorrect : " + infoEmpl[5]);
             }
 
 
 
-                if(infoEmpl[6].matches("^[MTC][0-9]{5}$")){
-
-                    if (managerRepository.findByMatricule(infoEmpl[6]) != null) {
-                        t.setManager(managerRepository.findByMatricule(infoEmpl[6]));
-                    } else {
-                        throw new BatchException("Le manager de matricule "+ infoEmpl[6] +" n'a pas été trouvé dans le fichier ou en base de données ");
-                    }
 
 
-                }else{
-                    throw new BatchException("la chaîne " + infoEmpl[6] + " ne respecte pas l'expression régulière ^[MTC][0-9]{5}$ ");
 
+            if(infoEmpl[6].matches("^[MTC][0-9]{5}$")){
+
+                if (managerRepository.findByMatricule(infoEmpl[6]) != null) {
+                    t.setManager(managerRepository.findByMatricule(infoEmpl[6]));
+                } else {
+                    throw new BatchException("Le manager de matricule "+ infoEmpl[6] +" n'a pas été trouvé dans le fichier ou en base de données ");
                 }
 
 
+            }else{
+                throw new BatchException("la chaîne " + infoEmpl[6] + " ne respecte pas l'expression régulière ^[MTC][0-9]{5}$ ");
+
+            }
+
+
+            processEmploye(t,ligneTechnicien);
             employes.add(t);
 
         }else{
@@ -276,4 +225,33 @@ public class MyRunner implements CommandLineRunner {
         }
     }
 
+    private void processEmploye(Employe employe,String ligneEmploye) throws BatchException{
+
+        String[] infoEmpl = ligneEmploye.split(",");
+
+
+
+        if (infoEmpl[0].matches("^[MTC][0-9]{5}$")) {
+            employe.setMatricule(infoEmpl[0]);
+        } else {
+            throw new BatchException("la chaîne " + infoEmpl[0] + " ne respecte pas l'expression régulière ^[MTC][0-9]{5}$ ");
+        }
+
+
+        employe.setNom(infoEmpl[1]);
+        employe.setPrenom(infoEmpl[2]);
+
+        try {
+            employe.setDateEmbauche(DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(infoEmpl[3]));
+        } catch (Exception e) {
+            throw new BatchException(infoEmpl[3] + " ne respecte pas le format de date dd/MM/yyyy ");
+        }
+
+        try {
+            employe.setSalaire(Double.parseDouble(infoEmpl[4]));
+        } catch (Exception e) {
+            throw new BatchException(infoEmpl[4] + " n'est pas un nombre valide pour un salaire ");
+        }
+
+    }
 }
