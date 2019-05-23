@@ -198,13 +198,19 @@ public class MyRunner implements CommandLineRunner {
             }
 
 
+            ArrayList<String>  matricules = new ArrayList<>();
+            for(Employe emp : employes){
+                if (emp instanceof Manager){
+                    matricules.add(emp.getMatricule());
+                }
+            }
 
 
 
 
             if(infoEmpl[6].matches("^[MTC][0-9]{5}$")){
 
-                if (managerRepository.findByMatricule(infoEmpl[6]) != null) {
+                if (managerRepository.findByMatricule(infoEmpl[6]) != null || matricules.contains(infoEmpl[6])) {
                     t.setManager(managerRepository.findByMatricule(infoEmpl[6]));
                 } else {
                     throw new BatchException("Le manager de matricule "+ infoEmpl[6] +" n'a pas été trouvé dans le fichier ou en base de données ");
